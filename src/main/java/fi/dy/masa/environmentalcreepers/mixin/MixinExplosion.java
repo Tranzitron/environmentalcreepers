@@ -240,10 +240,11 @@ public abstract class MixinExplosion
 
     private String envc_printExplosionInfo()
     {
+        Entity causingEntity = this.getCausingEntity();
         return String.format("Explosion @ [%.5f, %.5f, %.5f], power: %.2f - type: '%s' - explosion class: '%s', placer: '%s'",
                              this.x, this.y, this.z, this.power,
                              (this.entity instanceof CreeperEntity) ? "Creeper" : "Other",
                              this.getClass().getName(),
-                             this.getCausingEntity() != null ? this.getCausingEntity().getClass().getName() : "<null>");
+                             causingEntity != null ? causingEntity.getClass().getName() : "<null>");
     }
 }
