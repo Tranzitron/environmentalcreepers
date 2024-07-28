@@ -8,13 +8,13 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -24,14 +24,13 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.particle.ParticleEffect;
-import net.minecraft.sound.SoundEvent;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.explosion.Explosion.DestructionType;
 import net.minecraft.world.explosion.ExplosionBehavior;
-
 import fi.dy.masa.environmentalcreepers.EnvironmentalCreepers;
 import fi.dy.masa.environmentalcreepers.config.Configs;
 import fi.dy.masa.environmentalcreepers.util.ExplosionUtils;
@@ -51,9 +50,9 @@ public abstract class MixinExplosion
 
     @Shadow @Final private DestructionType destructionType;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/entity/damage/DamageSource;Lnet/minecraft/world/explosion/ExplosionBehavior;DDDFZLnet/minecraft/world/explosion/Explosion$DestructionType;Lnet/minecraft/particle/ParticleEffect;Lnet/minecraft/particle/ParticleEffect;Lnet/minecraft/sound/SoundEvent;)V",
+    @Inject(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/entity/damage/DamageSource;Lnet/minecraft/world/explosion/ExplosionBehavior;DDDFZLnet/minecraft/world/explosion/Explosion$DestructionType;Lnet/minecraft/particle/ParticleEffect;Lnet/minecraft/particle/ParticleEffect;Lnet/minecraft/registry/entry/RegistryEntry;)V",
             at = @At("RETURN"))
-    private void envc_modifyExplosionSize(World world, Entity entity, DamageSource damageSource, ExplosionBehavior behavior, double x, double y, double z, float power, boolean createFire, DestructionType destructionType, ParticleEffect particle, ParticleEffect emitterParticle, SoundEvent soundEvent, CallbackInfo ci)
+    private void envc_modifyExplosionSize(World world, Entity entity, DamageSource damageSource, ExplosionBehavior behavior, double x, double y, double z, float power, boolean createFire, DestructionType destructionType, ParticleEffect particle, ParticleEffect emitterParticle, RegistryEntry soundEvent, CallbackInfo ci)
     {
         if (entity instanceof CreeperEntity && Configs.Toggles.MODIFY_CREEPER_EXPLOSION_STRENGTH.getValue())
         {
@@ -73,7 +72,7 @@ public abstract class MixinExplosion
     {
         if (this.world.isClient == false)
         {
-            EnvironmentalCreepers.logInfo(this::envc_printExplosionInfo);
+            EnvironmentalCreepers.logInfo(this::envc$printExplosionInfo);
         }
 
         if (Configs.Toggles.DISABLE_ALL_EXPLOSIONS.getValue())
@@ -113,7 +112,7 @@ public abstract class MixinExplosion
             if (Configs.Toggles.MODIFY_CREEPER_EXPLOSION_DROP_CHANCE.getValue() &&
                 Configs.Generic.CREEPER_EXPLOSION_BLOCK_DROP_CHANCE.getFloatValue() == 0.0f)
             {
-                this.envc_removeBlocks();
+                this.envc$removeBlocks();
             }
         }
         else
@@ -121,7 +120,7 @@ public abstract class MixinExplosion
             if (Configs.Toggles.MODIFY_OTHER_EXPLOSION_DROP_CHANCE.getValue() &&
                 Configs.Generic.OTHER_EXPLOSION_BLOCK_DROP_CHANCE.getFloatValue() == 0.0f)
             {
-                this.envc_removeBlocks();
+                this.envc$removeBlocks();
             }
         }
     }
@@ -175,7 +174,7 @@ public abstract class MixinExplosion
 
         for (Entity e : list)
         {
-            if (this.envc_isImmuneToExplosion(e))
+            if (this.envc$isImmuneToExplosion(e))
             {
                 immune.add(e);
             }
@@ -190,7 +189,8 @@ public abstract class MixinExplosion
         return list;
     }
 
-    private boolean envc_isImmuneToExplosion(Entity entity)
+    @Unique
+    private boolean envc$isImmuneToExplosion(Entity entity)
     {
         Configs.ListType type = Configs.Lists.entityClassListType;
 
@@ -220,7 +220,8 @@ public abstract class MixinExplosion
         return entity.isImmuneToExplosion((Explosion)(Object) this);
     }
 
-    private void envc_removeBlocks()
+    @Unique
+    private void envc$removeBlocks()
     {
         BlockState air = Blocks.AIR.getDefaultState();
 
@@ -238,7 +239,8 @@ public abstract class MixinExplosion
         this.affectedBlocks.clear();
     }
 
-    private String envc_printExplosionInfo()
+    @Unique
+    private String envc$printExplosionInfo()
     {
         Entity causingEntity = this.getCausingEntity();
         return String.format("Explosion @ [%.5f, %.5f, %.5f], power: %.2f - type: '%s' - explosion class: '%s', placer: '%s'",
